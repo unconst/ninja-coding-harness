@@ -674,7 +674,7 @@ impl ContinuousImprovementLoop {
             .as_secs();
 
         // Count actual rollout files
-        let rollout_path = "/Arbos/ninja_rollouts";
+        let rollout_path = "/Arbos/ninja/ninja_rollouts";
         let mut total_challenges = 0;
         let mut successful_challenges = 0;
         let mut avg_duration = 0.0;

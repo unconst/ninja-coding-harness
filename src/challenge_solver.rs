@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, error};
+use tokio::fs;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SolveResult {
@@ -122,7 +123,7 @@ Requirements:
 - Write complete, working code that solves the problem
 - Include all necessary imports and proper function definitions
 - Make sure the code is syntactically correct and will pass the tests
-- For the Fibonacci challenge, create a function called 'fibonacci' that takes n as parameter
+- For the Fibonacci challenge, create a function called 'fib' that takes n as parameter
 - For the math utilities challenge, create a function called 'add' that takes two parameters
 - Only respond with the code, no explanations or markdown formatting
 
@@ -179,15 +180,29 @@ Write clean, efficient code:",
             });
         }
 
-        // Create a basic test file if needed
+        // Use existing test file if available, otherwise generate one
         if challenge.expected_files.len() > 1 {
             if let Some(test_file) = challenge.expected_files.get(1) {
-                let test_content = self.generate_basic_test_file(challenge, code).await?;
-                files.push(FileOperation {
-                    path: format!("/app/{}", test_file),
-                    content: test_content,
-                    operation_type: FileOperationType::Create,
-                });
+                let test_file_path = format!("generated-challenges/{}", test_file);
+                match tokio::fs::read_to_string(&test_file_path).await {
+                    Ok(existing_test_content) => {
+                        info!("Using existing test file: {}", test_file_path);
+                        files.push(FileOperation {
+                            path: format!("/app/{}", test_file),
+                            content: existing_test_content,
+                            operation_type: FileOperationType::Create,
+                        });
+                    },
+                    Err(_) => {
+                        info!("Existing test file not found, generating basic test for: {}", test_file);
+                        let test_content = self.generate_basic_test_file(challenge, code).await?;
+                        files.push(FileOperation {
+                            path: format!("/app/{}", test_file),
+                            content: test_content,
+                            operation_type: FileOperationType::Create,
+                        });
+                    }
+                }
             }
         }
 

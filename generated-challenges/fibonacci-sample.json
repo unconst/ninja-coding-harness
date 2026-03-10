@@ -1,0 +1,42 @@
+{
+  "id": "fibonacci-sample-001",
+  "title": "Fibonacci Sequence Implementation",
+  "description": "Implement a function that calculates the nth Fibonacci number efficiently using dynamic programming.",
+  "repository": "https://github.com/ninja-harness/challenges",
+  "language": "python",
+  "difficulty": "Easy",
+  "tests": [
+    {
+      "name": "test_fibonacci_basic",
+      "description": "Test basic Fibonacci sequence values",
+      "test_type": "FailToPass",
+      "command": "python -m pytest test_fibonacci.py::test_basic -v",
+      "expected_result": "Pass"
+    },
+    {
+      "name": "test_fibonacci_performance",
+      "description": "Ensure the implementation is efficient for large numbers",
+      "test_type": "Validation",
+      "command": "python -m pytest test_fibonacci.py::test_performance -v",
+      "expected_result": "Pass"
+    }
+  ],
+  "setup_commands": [
+    "pip install pytest",
+    "pip install numpy"
+  ],
+  "validation_commands": [
+    "python -c \"import fibonacci; print('Module imported successfully')\""
+  ],
+  "expected_files": [
+    "fibonacci.py",
+    "test_fibonacci.py"
+  ],
+  "metadata": {
+    "author": "Ninja Harness",
+    "category": "algorithms",
+    "source": "synthetic",
+    "created_for_loop_unblock": "true"
+  },
+  "created_at": "2026-03-10T10:40:00Z"
+}

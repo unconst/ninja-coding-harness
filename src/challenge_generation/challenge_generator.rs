@@ -130,12 +130,44 @@ impl ChallengeGenerator {
     pub async fn generate_and_solve_batch(&self) -> Result<ChallengeGenerationResult> {
         let start_time = Instant::now();
         info!("Starting challenge generation batch");
+        println!("🔍 DEBUG: Starting challenge generation batch");
 
-        // Generate challenges using SWE-Forge
-        let generated_challenges = self.swe_forge.generate_challenges().await?;
+        // First, check for existing challenges
+        info!("Loading existing challenges from files");
+        println!("📁 Checking for existing challenge files...");
+
+        let all_challenges = match self.load_existing_challenges().await {
+            Ok(challenges) => {
+                if challenges.is_empty() {
+                    info!("No existing challenges found in ./generated-challenges");
+                    println!("📁 No existing challenges found");
+                } else {
+                    info!("Found {} existing challenges", challenges.len());
+                    println!("📁 Found {} existing challenges", challenges.len());
+                }
+                challenges
+            }
+            Err(e) => {
+                warn!("Failed to load existing challenges: {}", e);
+                println!("⚠️  Failed to load existing challenges: {}", e);
+                Vec::new()
+            }
+        };
+
+        // Convert existing challenges to GeneratedChallenge format
+        let generated_challenges = if !all_challenges.is_empty() {
+            info!("Converting {} existing challenges to GeneratedChallenge format", all_challenges.len());
+            println!("🔄 Converting existing challenges to pipeline format");
+            self.convert_challenges_to_generated(all_challenges)
+        } else {
+            info!("No existing challenges found, generating new ones with SWE-Forge");
+            println!("⚡ Generating new challenges with SWE-Forge");
+            self.swe_forge.generate_challenges().await?
+        };
+
         let generated_count = generated_challenges.len();
 
-        info!("Generated {} challenges from SWE-Forge", generated_count);
+        info!("Generated {} challenges total", generated_count);
 
         if generated_challenges.is_empty() {
             warn!("No challenges were generated - this may indicate a configuration issue");
@@ -304,5 +336,61 @@ impl ChallengeGenerator {
         error_types.sort();
         error_types.dedup();
         error_types
+    }
+
+    /// Load existing challenge JSON files from the generated-challenges directory
+    async fn load_existing_challenges(&self) -> Result<Vec<Challenge>> {
+        use tokio::fs;
+        use std::path::Path;
+
+        let challenges_dir = Path::new("./generated-challenges");
+        if !challenges_dir.exists() {
+            info!("Challenge directory doesn't exist: {}", challenges_dir.display());
+            return Ok(vec![]);
+        }
+
+        let mut challenges = Vec::new();
+        let mut entries = fs::read_dir(challenges_dir).await.map_err(|e| {
+            NinjaError::Io(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("Failed to read challenges directory: {}", e)
+            ))
+        })?;
+
+        while let Some(entry) = entries.next_entry().await.map_err(|e| {
+            NinjaError::Io(e)
+        })? {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("json") {
+                info!("Loading challenge from: {}", path.display());
+                match Challenge::from_file(path.to_str().unwrap()).await {
+                    Ok(challenge) => {
+                        info!("Successfully loaded challenge: {}", challenge.id);
+                        challenges.push(challenge);
+                    }
+                    Err(e) => {
+                        warn!("Failed to load challenge from {}: {}", path.display(), e);
+                    }
+                }
+            }
+        }
+
+        info!("Loaded {} challenges from existing files", challenges.len());
+        Ok(challenges)
+    }
+
+    /// Convert Challenge objects to GeneratedChallenge for pipeline compatibility
+    fn convert_challenges_to_generated(&self, challenges: Vec<Challenge>) -> Vec<GeneratedChallenge> {
+        use std::path::PathBuf;
+
+        challenges.into_iter().map(|challenge| {
+            GeneratedChallenge {
+                task_id: challenge.id.clone(),
+                repository: challenge.repository.clone().unwrap_or_else(|| "https://github.com/ninja-harness/challenges".to_string()),
+                difficulty: challenge.difficulty.to_string(),
+                workspace_path: PathBuf::from("./generated-challenges"),
+                challenge,
+            }
+        }).collect()
     }
 }

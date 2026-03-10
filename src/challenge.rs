@@ -162,6 +162,23 @@ impl Challenge {
 
         Ok(())
     }
+
+    /// Load a challenge from a JSON file
+    pub async fn from_file(path: &str) -> crate::error::Result<Self> {
+        use tokio::fs;
+        use crate::error::NinjaError;
+
+        let content = fs::read_to_string(path).await
+            .map_err(NinjaError::Io)?;
+
+        let challenge: Self = serde_json::from_str(&content)
+            .map_err(NinjaError::Json)?;
+
+        challenge.validate()
+            .map_err(|e| NinjaError::ChallengeParse(e))?;
+
+        Ok(challenge)
+    }
 }
 
 impl ChallengeResult {

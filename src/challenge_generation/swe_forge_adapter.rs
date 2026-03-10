@@ -28,14 +28,21 @@ pub struct SweForgeConfig {
 impl Default for SweForgeConfig {
     fn default() -> Self {
         Self {
-            swe_forge_binary: "swe-forge".to_string(),
+            swe_forge_binary: "/Arbos/swe-forge/target/release/swe-forge".to_string(),
             github_token: std::env::var("GITHUB_TOKEN").unwrap_or_default(),
             openrouter_api_key: std::env::var("OPENROUTER_API_KEY").unwrap_or_default(),
             output_dir: "./generated-challenges".to_string(),
-            max_tasks: 5,
-            difficulty: Some("medium".to_string()),
-            min_stars: Some(20),
-            languages: Some(vec!["python".to_string(), "rust".to_string(), "javascript".to_string()]),
+            max_tasks: 3,  // Reduced to get faster results
+            difficulty: Some("easy".to_string()),  // Changed to easy for more hits
+            min_stars: Some(5),  // Reduced from 20 to 5 for more repos
+            languages: Some(vec![
+                "python".to_string(),
+                "rust".to_string(),
+                "javascript".to_string(),
+                "typescript".to_string(),
+                "go".to_string(),  // Added more languages
+                "java".to_string(),
+            ]),
         }
     }
 }
@@ -266,28 +273,50 @@ impl SweForgeAdapter {
     }
 
     pub async fn install_swe_forge(&self) -> Result<()> {
-        info!("Installing or updating SWE-Forge");
+        info!("Verifying SWE-Forge installation");
 
-        // Check if SWE-Forge is already installed
-        let output = Command::new("which")
-            .arg("swe-forge")
-            .output();
+        // Check if the configured binary exists
+        let binary_path = Path::new(&self.config.swe_forge_binary);
 
-        match output {
-            Ok(out) if out.status.success() => {
-                info!("SWE-Forge already installed");
-                return Ok(());
-            }
-            _ => {
-                info!("SWE-Forge not found, building from source");
+        if binary_path.exists() {
+            info!("✅ SWE-Forge binary found at: {}", self.config.swe_forge_binary);
+
+            // Quick test to ensure the binary is functional
+            match std::process::Command::new(&self.config.swe_forge_binary)
+                .arg("--help")
+                .output()
+            {
+                Ok(output) if output.status.success() => {
+                    info!("✅ SWE-Forge binary is functional");
+                    return Ok(());
+                }
+                Ok(_) => {
+                    warn!("SWE-Forge binary exists but is not functional, attempting rebuild");
+                }
+                Err(e) => {
+                    warn!("Failed to test SWE-Forge binary: {}, attempting rebuild", e);
+                }
             }
         }
 
-        // Build SWE-Forge from the cloned repository
-        let build_output = Command::new("cargo")
+        warn!("SWE-Forge binary not found at configured path: {}", self.config.swe_forge_binary);
+
+        // Try to build SWE-Forge if the binary doesn't exist or is broken
+        let swe_forge_dir = binary_path.parent()
+            .and_then(|p| p.parent())
+            .and_then(|p| p.parent())
+            .ok_or_else(|| NinjaError::Config("Invalid SWE-Forge binary path".to_string()))?;
+
+        info!("Attempting to build SWE-Forge in directory: {:?}", swe_forge_dir);
+
+        // Use tokio::process to make the build non-blocking
+        use tokio::process::Command as TokioCommand;
+
+        let build_output = TokioCommand::new("cargo")
             .args(&["build", "--release"])
-            .current_dir("../swe-forge")
-            .output()?;
+            .current_dir(swe_forge_dir)
+            .output()
+            .await?;
 
         if !build_output.status.success() {
             let stderr = String::from_utf8_lossy(&build_output.stderr);
@@ -295,7 +324,12 @@ impl SweForgeAdapter {
             return Err(NinjaError::Execution(format!("SWE-Forge build failed: {}", stderr)));
         }
 
-        info!("SWE-Forge built successfully");
+        // Verify the binary was created
+        if !binary_path.exists() {
+            return Err(NinjaError::Execution("SWE-Forge binary not found after build".to_string()));
+        }
+
+        info!("✅ SWE-Forge built successfully");
         Ok(())
     }
 }

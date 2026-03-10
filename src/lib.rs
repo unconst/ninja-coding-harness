@@ -10,6 +10,7 @@ pub mod llm;
 pub mod executor_simple;
 pub mod challenge_solver;
 pub mod challenge_generation;
+pub mod continuous_improvement_loop;
 
 pub use challenge::*;
 pub use config::*;
@@ -18,3 +19,4 @@ pub use llm::*;
 pub use executor_simple::*;
 pub use challenge_solver::*;
 pub use challenge_generation::*;
+pub use continuous_improvement_loop::*;
