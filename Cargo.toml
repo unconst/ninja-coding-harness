@@ -4,6 +4,7 @@ version = "1.0.0"
 edition = "2021"
 authors = ["Arbos <arbos@example.com>"]
 description = "A self-improving coding harness for solving programming challenges"
+default-run = "ninja"
 
 [lib]
 name = "ninja"
