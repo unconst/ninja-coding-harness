@@ -7,6 +7,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Loading challenge...");
     let challenge = Challenge::from_file("generated-challenges/fibonacci-sample.json").await?;
     println!("Challenge loaded: {}", challenge.title);
+    println!("Setup commands: {:?}", challenge.setup_commands);
+    println!("Expected files: {:?}", challenge.expected_files);
 
     println!("Initializing solver...");
     let config = Config::load_default().await?;

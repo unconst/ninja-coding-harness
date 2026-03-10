@@ -125,7 +125,8 @@ Requirements:
 - Make sure the code is syntactically correct and will pass the tests
 - For the Fibonacci challenge, create a function called 'fib' that takes n as parameter
 - For the math utilities challenge, create a function called 'add' that takes two parameters
-- Only respond with the code, no explanations or markdown formatting
+- ONLY generate the solution file, do NOT generate test files (tests are provided separately)
+- Only respond with the solution code, no explanations or markdown formatting
 
 Expected files: {:?}
 
@@ -186,15 +187,17 @@ Write clean, efficient code:",
                 let test_file_path = format!("generated-challenges/{}", test_file);
                 match tokio::fs::read_to_string(&test_file_path).await {
                     Ok(existing_test_content) => {
-                        info!("Using existing test file: {}", test_file_path);
+                        info!("✅ Using existing test file: {}", test_file_path);
+                        debug!("Existing test content length: {} chars", existing_test_content.len());
                         files.push(FileOperation {
                             path: format!("/app/{}", test_file),
                             content: existing_test_content,
                             operation_type: FileOperationType::Create,
                         });
                     },
-                    Err(_) => {
-                        info!("Existing test file not found, generating basic test for: {}", test_file);
+                    Err(e) => {
+                        info!("❌ Existing test file not found at {}, error: {}", test_file_path, e);
+                        info!("Generating basic test for: {}", test_file);
                         let test_content = self.generate_basic_test_file(challenge, code).await?;
                         files.push(FileOperation {
                             path: format!("/app/{}", test_file),
@@ -212,8 +215,9 @@ Write clean, efficient code:",
         let mut test_results = vec![];
 
         // Run setup commands first if any
+        info!("📋 Challenge has {} setup commands", challenge.setup_commands.len());
         for setup_cmd in &challenge.setup_commands {
-            debug!("Running setup command: {}", setup_cmd);
+            info!("🔧 Running setup command: {}", setup_cmd);
 
             let setup_request = ExecutionRequest {
                 command: setup_cmd.clone(),
@@ -223,7 +227,21 @@ Write clean, efficient code:",
                 timeout_seconds: 60,
             };
 
-            let _setup_result = self.executor.execute(setup_request).await?;
+            match self.executor.execute(setup_request).await {
+                Ok(result) => {
+                    info!("✅ Setup command completed: exit_code={}", result.exit_code);
+                    if result.exit_code != 0 {
+                        error!("❌ Setup command failed with exit code {}: stderr={}", result.exit_code, result.stderr);
+                        error!("❌ Setup stdout: {}", result.stdout);
+                    } else {
+                        debug!("Setup stdout: {}", result.stdout);
+                    }
+                },
+                Err(e) => {
+                    error!("❌ Setup command execution error: {}", e);
+                    // Continue with tests even if setup fails - this allows debugging
+                }
+            }
         }
 
         // Run each test

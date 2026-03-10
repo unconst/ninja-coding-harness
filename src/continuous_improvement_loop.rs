@@ -786,10 +786,13 @@ impl ContinuousImprovementLoop {
     }
 
     fn format_telegram_message(&self, report: &TelegramReport) -> String {
+        // Add debug info to ensure we're seeing the correct data
+        let debug_info = format!("(Debug: found {} files)", report.challenges_processed_since_last_report);
+
         format!(
             "🔄 **Ninja Improvement Loop Report** - Iteration {}\n\n\
              📊 **Performance Summary:**\n\
-             • Challenges processed: {}\n\
+             • Challenges processed: {} {}\n\
              • Success rate: {:.1}%\n\
              • Claude Code parity: {:.1}%\n\n\
              🎯 **Next targets:** {}\n\n\
@@ -797,6 +800,7 @@ impl ContinuousImprovementLoop {
              🕐 Report time: {}",
             self.improvement_iterations,
             report.challenges_processed_since_last_report,
+            debug_info,
             report.success_rate_percentage,
             report.claude_code_parity_progress.overall_parity_score,
             report.next_optimization_targets.join(", "),

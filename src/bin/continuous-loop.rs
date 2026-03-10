@@ -85,7 +85,7 @@ async fn main() -> Result<()> {
     improvement_config.generation_config.generation_interval_minutes = 30; // Generate every 30 minutes
     improvement_config.generation_config.max_concurrent_solves = 5; // Higher throughput
     improvement_config.generation_config.auto_improvement_enabled = true;
-    improvement_config.telegram_reporting_interval_minutes = 120; // Report every 2 hours
+    improvement_config.telegram_reporting_interval_minutes = 5; // Report every 5 minutes for testing
     improvement_config.performance_tracking_window_hours = 24; // Track last 24 hours
     improvement_config.max_rollout_history_gb = 10.0; // Allow more storage for detailed analysis
 
