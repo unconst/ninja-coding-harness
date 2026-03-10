@@ -25,6 +25,16 @@ pub enum DifficultyLevel {
     Hard,
 }
 
+impl std::fmt::Display for DifficultyLevel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DifficultyLevel::Easy => write!(f, "Easy"),
+            DifficultyLevel::Medium => write!(f, "Medium"),
+            DifficultyLevel::Hard => write!(f, "Hard"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TestCase {
     pub name: String,
