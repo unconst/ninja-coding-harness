@@ -1,6 +1,6 @@
 [package]
 name = "ninja"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 authors = ["Arbos <arbos@example.com>"]
 description = "A self-improving coding harness for solving programming challenges"
