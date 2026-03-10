@@ -27,6 +27,9 @@ pub enum NinjaError {
     #[error("JSON parsing error: {0}")]
     Json(#[from] serde_json::Error),
 
+    #[error("Serialization error: {0}")]
+    Serialization(String),
+
     #[error("Unknown error: {0}")]
     Unknown(String),
 }
