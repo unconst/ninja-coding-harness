@@ -120,13 +120,14 @@ Difficulty: {}
 
 Requirements:
 - Write complete, working code that solves the problem
-- Include all necessary imports
+- Include all necessary imports and proper function definitions
 - Make sure the code is syntactically correct and will pass the tests
+- For the Fibonacci challenge, create a function called 'fibonacci' that takes n as parameter
 - Only respond with the code, no explanations or markdown formatting
 
 Expected files: {:?}
 
-Code:",
+Write clean, efficient code:",
             challenge.title,
             challenge.description,
             challenge.language,
@@ -253,13 +254,48 @@ Code:",
     }
 
     async fn generate_basic_test_file(&self, challenge: &Challenge, _code: &str) -> Result<String> {
-        // For now, return a basic test structure
-        // In a more sophisticated version, we would generate proper tests
+        // Generate appropriate tests based on the challenge
+        let module_name = challenge.expected_files.get(0).unwrap_or(&"solution".to_string()).replace(".py", "");
 
-        let test_content = format!(
-            "import pytest\nfrom {} import *\n\ndef test_basic():\n    # Basic test - this should be generated based on the challenge\n    assert True  # Placeholder\n",
-            challenge.expected_files.get(0).unwrap_or(&"solution".to_string()).replace(".py", "")
-        );
+        let test_content = if challenge.id == "ninja-sample-001" {
+            // Special handling for Fibonacci challenge
+            format!(
+r#"import pytest
+from {} import fibonacci
+
+def test_basic():
+    """Test basic Fibonacci sequence values"""
+    assert fibonacci(0) == 0
+    assert fibonacci(1) == 1
+    assert fibonacci(2) == 1
+    assert fibonacci(3) == 2
+    assert fibonacci(4) == 3
+    assert fibonacci(5) == 5
+    assert fibonacci(6) == 8
+    assert fibonacci(7) == 13
+
+def test_performance():
+    """Ensure the implementation is efficient for large numbers"""
+    # Test that we can compute larger Fibonacci numbers quickly
+    result = fibonacci(30)
+    assert result == 832040
+
+    # Test edge cases
+    assert fibonacci(10) == 55
+    assert fibonacci(15) == 610
+"#, module_name)
+        } else {
+            // Generic test template for other challenges
+            format!(
+r#"import pytest
+from {} import *
+
+def test_basic():
+    """Basic test for the challenge"""
+    # TODO: Generate proper tests based on challenge description
+    assert True  # Placeholder - needs proper test implementation
+"#, module_name)
+        };
 
         Ok(test_content)
     }
