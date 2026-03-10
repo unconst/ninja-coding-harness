@@ -20,9 +20,12 @@ mod error;
 mod llm;
 // mod harness;
 // mod executor;
+mod executor_simple;
 
 use config::Config;
 use llm::{LlmProvider, OpenRouterProvider, ChatRequest, ChatMessage};
+use executor_simple::{SimpleCodeExecutor, ExecutionRequest, FileOperation, FileOperationType};
+use std::collections::HashMap;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -84,6 +87,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("⚠️  LLM test skipped - API key not configured");
     }
 
+    println!("\n🐳 Testing Docker Integration...");
+
+    match test_docker_integration().await {
+        Ok(result) => {
+            println!("✅ Docker Integration Test Successful!");
+            println!("   Exit Code: {}", result.0);
+            println!("   Output: {}", result.1.trim());
+        },
+        Err(e) => {
+            println!("❌ Docker Integration Test Failed: {}", e);
+        }
+    }
+
     println!("\n🚀 Ninja harness foundation is ready!");
     println!("   Phase 2: LLM integration and Docker execution");
 
@@ -107,4 +123,32 @@ async fn test_llm_integration() -> Result<String, Box<dyn std::error::Error>> {
 
     let response = provider.chat_completion(request).await?;
     Ok(response.content)
+}
+
+async fn test_docker_integration() -> Result<(i32, String), Box<dyn std::error::Error>> {
+    let config = Config::load_default().await?;
+    let executor = SimpleCodeExecutor::new(config.docker).await?;
+
+    // Create a simple Python test script
+    let files = vec![
+        FileOperation {
+            path: "/app/test.py".to_string(),
+            content: "print('Hello from Docker!')".to_string(),
+            operation_type: FileOperationType::Create,
+        }
+    ];
+
+    let mut env = HashMap::new();
+    env.insert("PYTHONPATH".to_string(), "/app".to_string());
+
+    let request = ExecutionRequest {
+        command: "python /app/test.py".to_string(),
+        working_directory: "/app".to_string(),
+        files,
+        environment: env,
+        timeout_seconds: 30,
+    };
+
+    let result = executor.execute(request).await?;
+    Ok((result.exit_code, result.stdout))
 }
