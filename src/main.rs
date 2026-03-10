@@ -15,8 +15,17 @@
 use std::env;
 
 mod challenge;
+mod config;
+mod error;
+mod llm;
+// mod harness;
+// mod executor;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+use config::Config;
+use llm::{LlmProvider, OpenRouterProvider, ChatRequest, ChatMessage};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🥷 Ninja Coding Harness v0.1.0");
     println!("A self-improving coding challenge solver");
     println!("=====================================");
@@ -58,8 +67,44 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let json = serde_json::to_string_pretty(&sample)?;
     println!("{}", json);
 
+    println!("\n🚀 Testing LLM Integration...");
+
+    // Test LLM integration
+    if env::var("OPENROUTER_API_KEY").is_ok() {
+        match test_llm_integration().await {
+            Ok(response) => {
+                println!("✅ LLM Integration Test Successful!");
+                println!("   Response: {}", response.trim());
+            },
+            Err(e) => {
+                println!("❌ LLM Integration Test Failed: {}", e);
+            }
+        }
+    } else {
+        println!("⚠️  LLM test skipped - API key not configured");
+    }
+
     println!("\n🚀 Ninja harness foundation is ready!");
-    println!("   Next: Implement LLM integration and Docker execution");
+    println!("   Phase 2: LLM integration and Docker execution");
 
     Ok(())
+}
+
+async fn test_llm_integration() -> Result<String, Box<dyn std::error::Error>> {
+    let config = Config::load_default().await?;
+    let provider = OpenRouterProvider::new(config.openrouter);
+
+    let request = ChatRequest {
+        messages: vec![ChatMessage {
+            role: "user".to_string(),
+            content: "Say 'Hello, World!' in exactly 2 words".to_string(),
+        }],
+        temperature: Some(0.1),
+        max_tokens: Some(50),
+        tools: None,
+        tool_choice: None,
+    };
+
+    let response = provider.chat_completion(request).await?;
+    Ok(response.content)
 }

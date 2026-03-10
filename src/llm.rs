@@ -107,12 +107,7 @@ impl OpenRouterProvider {
 
         if !response.status().is_success() {
             let error_text = response.text().await?;
-            return Err(NinjaError::Llm(reqwest::Error::from(
-                std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("OpenRouter API error: {}", error_text),
-                ),
-            )));
+            return Err(NinjaError::http_client(format!("OpenRouter API error: {}", error_text)));
         }
 
         Ok(response)
@@ -194,7 +189,7 @@ impl LlmProvider for OpenRouterProvider {
             temperature: Some(0.1),
             max_tokens: None,
             tools: Some(request.functions),
-            tool_choice: request.required_function.map(|f| json!({"type": "function", "function": {"name": f}})),
+            tool_choice: request.required_function,
         };
 
         let response = self.chat_completion(chat_request).await?;
@@ -210,12 +205,7 @@ impl LlmProvider for OpenRouterProvider {
         }
 
         // Fallback if no tool calls were made
-        Err(NinjaError::Llm(reqwest::Error::from(
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "No function call found in response",
-            ),
-        )))
+        Err(NinjaError::http_client("No function call found in response".to_string()))
     }
 }
 

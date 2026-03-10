@@ -31,4 +31,10 @@ pub enum NinjaError {
     Unknown(String),
 }
 
+impl NinjaError {
+    pub fn http_client(message: String) -> Self {
+        NinjaError::Unknown(message)
+    }
+}
+
 pub type Result<T> = std::result::Result<T, NinjaError>;
