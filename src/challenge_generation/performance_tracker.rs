@@ -7,7 +7,7 @@ use crate::challenge::Challenge;
 use crate::challenge_solver::SolveResult;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::{debug, info};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

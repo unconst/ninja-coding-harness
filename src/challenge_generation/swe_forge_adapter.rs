@@ -207,7 +207,7 @@ impl SweForgeAdapter {
         Some("python".to_string())
     }
 
-    async fn extract_expected_files(&self, workspace_data: &serde_yaml::Value) -> Vec<String> {
+    async fn extract_expected_files(&self, _workspace_data: &serde_yaml::Value) -> Vec<String> {
         // Extract file paths from the workspace data
         // This is a simplified implementation - real SWE-bench format is more complex
         vec!["solution.py".to_string()]

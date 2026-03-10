@@ -9,13 +9,11 @@ use crate::config::Config;
 use crate::error::{NinjaError, Result};
 use crate::challenge_generation::{SweForgeAdapter, SweForgeConfig, GeneratedChallenge, PerformanceTracker};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
 use tokio::time::sleep;
-use tracing::{debug, info, warn, error};
+use tracing::{info, warn, error};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChallengeGenerationConfig {

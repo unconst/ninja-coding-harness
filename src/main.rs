@@ -220,7 +220,7 @@ async fn test_phase_3_pipeline() -> Result<(), Box<dyn std::error::Error>> {
     generation_config.max_concurrent_solves = 1;
 
     // Test if we can initialize the challenge generator
-    let generator = ChallengeGenerator::new(generation_config, config).await?;
+    let _generator = ChallengeGenerator::new(generation_config, config).await?;
 
     println!("   ✅ Challenge Generator initialized successfully");
     println!("   📊 Phase 3 components ready: SWE-Forge adapter, Performance tracker, Self-improvement loop");

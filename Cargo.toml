@@ -5,6 +5,18 @@ edition = "2021"
 authors = ["Arbos <arbos@example.com>"]
 description = "A self-improving coding harness for solving programming challenges"
 
+[lib]
+name = "ninja"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ninja"
+path = "src/main.rs"
+
+[[bin]]
+name = "demo-swe-forge"
+path = "src/bin/demo-swe-forge.rs"
+
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

@@ -1,6 +1,6 @@
 use crate::challenge::Challenge;
 use crate::config::Config;
-use crate::error::{NinjaError, Result};
+use crate::error::Result;
 use crate::executor_simple::{SimpleCodeExecutor, ExecutionRequest, FileOperation, FileOperationType};
 use crate::llm::{LlmProvider, OpenRouterProvider, ChatRequest, ChatMessage};
 use serde::{Deserialize, Serialize};
@@ -123,6 +123,7 @@ Requirements:
 - Include all necessary imports and proper function definitions
 - Make sure the code is syntactically correct and will pass the tests
 - For the Fibonacci challenge, create a function called 'fibonacci' that takes n as parameter
+- For the math utilities challenge, create a function called 'add' that takes two parameters
 - Only respond with the code, no explanations or markdown formatting
 
 Expected files: {:?}
@@ -283,6 +284,19 @@ def test_performance():
     # Test edge cases
     assert fibonacci(10) == 55
     assert fibonacci(15) == 610
+"#, module_name)
+        } else if challenge.id == "swe-forge-demo-001" {
+            // Special handling for simple math demo challenge
+            format!(
+r#"import pytest
+from {} import add
+
+def test_addition():
+    """Test basic addition functionality"""
+    assert add(2, 3) == 5
+    assert add(0, 0) == 0
+    assert add(-1, 1) == 0
+    assert add(10, 20) == 30
 "#, module_name)
         } else {
             // Generic test template for other challenges
